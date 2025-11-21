@@ -10,7 +10,6 @@ workflows:
       cocoapods: default
 
     cache:
-      disable: false
       key: v5-{{ checksum "pubspec.lock" }}-{{ checksum "ios/Podfile.lock" }}
       paths:
         - ios/Pods/**                    
