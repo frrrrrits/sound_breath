@@ -10,7 +10,7 @@ workflows:
       cocoapods: default
 
     cache:
-      paths:
+      cache_paths:
         - ios/Pods/**                    
         - $HOME/.pub-cache/**             
         - $HOME/Library/Caches/CocoaPods/**  
