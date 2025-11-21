@@ -4,6 +4,7 @@ cache:
     - ios/Pods/**                    
     - $HOME/.pub-cache/**             
     - $HOME/Library/Caches/CocoaPods/**  
+    
 workflows:
   ios-release:
     name: iOS Release
@@ -14,9 +15,10 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+
     cache:
       disable: false
-    scripts:
+
     scripts:
       - name: Get Flutter packages
         script: |
