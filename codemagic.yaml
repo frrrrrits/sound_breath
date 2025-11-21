@@ -1,3 +1,9 @@
+cache:
+  key: v5-{{ checksum "pubspec.lock" }}-{{ checksum "ios/Podfile.lock" }}
+  paths:
+    - ios/Pods/**                    
+    - $HOME/.pub-cache/**             
+    - $HOME/Library/Caches/CocoaPods/**  
 workflows:
   ios-release:
     name: iOS Release
@@ -8,16 +14,21 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+    cache:
+      disable: false
     scripts:
-      - name: Set up code signing settings on Xcode project
-        script: |
-          xcode-project use-profil
+    scripts:
       - name: Get Flutter packages
         script: |
           flutter packages pub get
-      - name: Install pods
+      - name: Restore Pods
         script: |
-          find . -name "Podfile" -execdir pod install \;
+          if [ -d "ios/Pods" ]; then
+            echo "Pods already exist, skipping full pod install"
+            cd ios && pod install
+          else
+            cd ios && pod install
+          fi
       - name: Flutter analyze
         script: |
           flutter analyze
@@ -27,7 +38,6 @@ workflows:
         ignore_failure: true
       - name: Flutter build iOS release (with IPA export)
         script: |
-          flutter clean
           flutter build ios --release --no-codesign   # Codemagic will codesign later
 
     artifacts:
