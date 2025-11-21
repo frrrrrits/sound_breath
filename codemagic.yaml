@@ -1,0 +1,33 @@
+workflows:
+  ios-release:
+    name: iOS Release
+    environment:
+      vars:
+        XCODE_WORKSPACE: "Runner.xcworkspace"  # default for Flutter
+        XCODE_SCHEME: "Runner"
+      flutter: stable
+    triggering:
+      events:
+        - push
+        - tag
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+          source: true
+
+    scripts:
+      - name: Install pods
+        script: |
+          cd ios && pod install
+
+      - name: Flutter build iOS release (with IPA export)
+        script: |
+          flutter packages get
+          flutter clean
+          flutter build ios --release --no-codesign   # Codemagic will codesign later
+
+    artifacts:
+      - build/ios/ipa/*.ipa   # ← This is the key line
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM   # optional, for crash reports
+      - flutter_drive.log   # if you have integration tests
