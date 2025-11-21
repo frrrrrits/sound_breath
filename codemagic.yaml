@@ -1,21 +1,16 @@
 workflows:
   ios-release:
-    name: iOS Release
+    name: iOS Workflow
+    instance_type: mac_mini_m2
+    max_build_duration: 120
     environment:
-      vars:
-        XCODE_WORKSPACE: "Runner.xcworkspace"  # default for Flutter
-        XCODE_SCHEME: "Runner"
       flutter: stable
-      xcode: latest
+      xcode: latest # <-- set to specific version e.g. 14.3, 15.0 to avoid unexpected updates.
       cocoapods: default
-
-    cache:
-      cache_paths:
-        - ios/Pods/**                    
-        - $HOME/.pub-cache/**             
-        - $HOME/Library/Caches/CocoaPods/**  
-
     scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
       - name: Get Flutter packages
         script: |
           flutter packages pub get
@@ -29,11 +24,6 @@ workflows:
         script: |
           flutter test
         ignore_failure: true
-      - name: Flutter build iOS release (with IPA export)
+      - name: Flutter build ipa and automatic versioning
         script: |
-          flutter build ios --release --no-codesign   # Codemagic will codesign later
-
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - flutter_drive.log
+          flutter build ipa --release --no-codesign
