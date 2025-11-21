@@ -19,14 +19,9 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter packages pub get
-      - name: Restore Pods
+      - name: Install pods
         script: |
-          if [ -d "ios/Pods" ]; then
-            echo "Pods already exist, skipping full pod install"
-            cd ios && pod install
-          else
-            cd ios && pod install
-          fi
+          find . -name "Podfile" -execdir pod install \;
       - name: Flutter analyze
         script: |
           flutter analyze
