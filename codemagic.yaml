@@ -1,10 +1,3 @@
-cache:
-  key: v5-{{ checksum "pubspec.lock" }}-{{ checksum "ios/Podfile.lock" }}
-  paths:
-    - ios/Pods/**                    
-    - $HOME/.pub-cache/**             
-    - $HOME/Library/Caches/CocoaPods/**  
-    
 workflows:
   ios-release:
     name: iOS Release
@@ -18,6 +11,11 @@ workflows:
 
     cache:
       disable: false
+      key: v5-{{ checksum "pubspec.lock" }}-{{ checksum "ios/Podfile.lock" }}
+      paths:
+        - ios/Pods/**                    
+        - $HOME/.pub-cache/**             
+        - $HOME/Library/Caches/CocoaPods/**  
 
     scripts:
       - name: Get Flutter packages
