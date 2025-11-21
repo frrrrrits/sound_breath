@@ -7,7 +7,7 @@ workflows:
         XCODE_SCHEME: "Runner"
       flutter: stable
       xcode: latest
-      cocoapods: defaul
+      cocoapods: default
     scripts:
       - name: Set up code signing settings on Xcode project
         script: |
