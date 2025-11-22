@@ -17,7 +17,6 @@ class SbViewmodel extends ChangeNotifier {
       messages.add(msg);
       notifyListeners();
     });
-
     if (Platform.isWindows) {
       _startAsServer();
     } else {

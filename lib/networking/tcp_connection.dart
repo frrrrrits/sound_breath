@@ -33,11 +33,7 @@ class TcpConnection {
 
   Future<bool> connectToServer(String ip, int port) async {
     try {
-      _socket = await Socket.connect(
-        ip,
-        port,
-        timeout: const Duration(seconds: 6),
-      );
+      _socket = await Socket.connect(ip,port,timeout: const Duration(seconds: 6),);
       Logger.add('Connected to server $ip:$port');
       _socket!.listen((data) {
         final msg = String.fromCharCodes(data).trim();

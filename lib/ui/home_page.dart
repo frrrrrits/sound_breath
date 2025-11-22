@@ -194,10 +194,6 @@ class MyHomePage extends StatelessWidget {
                     hintText: 'Input server ip address',
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
                 ),
               ],
             ),
