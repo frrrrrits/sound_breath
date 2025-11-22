@@ -26,7 +26,9 @@ class MyHomePage extends StatelessWidget {
             ),
             body: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Platform.isWindows ? _buildServerUI(viewModel) : _buildClientUI(context, viewModel),
+              child: Platform.isWindows
+                  ? _buildServerUI(viewModel)
+                  : _buildClientUI(context, viewModel),
             ),
             floatingActionButton: Platform.isWindows
                 ? null
@@ -43,18 +45,41 @@ class MyHomePage extends StatelessWidget {
   Widget _buildServerUI(SbViewmodel vm) {
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          color: Colors.grey[200],
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            vm.status,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: vm.isConnected ? Colors.green[700] : Colors.orange[700],
+        Column(
+          children: [
+            Container(
+              width: double.infinity,
+              color: Colors.grey[200],
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                vm.status,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: vm.isConnected
+                      ? Colors.green[700]
+                      : Colors.orange[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              color: Colors.grey[200],
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                vm.isConnectedWithClient
+                    ? 'Client connected'
+                    : 'Waiting for client...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: vm.isConnectedWithClient
+                      ? Colors.green[700]
+                      : Colors.orange[700],
+                ),
+              ),
+            ),
+          ],
         ),
         Expanded(
           child: ListView.builder(

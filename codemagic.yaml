@@ -22,7 +22,7 @@ workflows:
           flutter analyze
       - name: Flutter build ipa
         script: |
-          flutter build ios --release --no-codesign
+          flutter build ios --debug --no-codesign
           cd build/ios/iphoneos
           mkdir -p Payload
           cp -r Runner.app Payload/
