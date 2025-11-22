@@ -1,114 +1,85 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sound_breath/persistant/sb_viewmodel.dart';
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-
-class _MyHomePageState extends State<MyHomePage> {
-  String localIp = "";
-  bool isServer = Platform.isWindows;
-  bool connected = false;
-  
-  final List<String> _logs = [];
-  static const int port = 4040;
-
-  ServerSocket? _server;
-  final List<Socket> _clients = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _setup();
-  }
-
-  Future<void> _setup() async {
-    localIp = await getLocalIp();
-    if (isServer) {
-      await startServer();
-    }
-    setState(() {});
-  }
-
-  
-  Future<void> startServer() async {
-    try {
-      final server = await ServerSocket.bind(InternetAddress.anyIPv4, port);
-      _server = server;
-      
-      _addLog('Server started on $localIp:$port');
-
-      server.listen((client) {
-        _clients.add(client);
-        client.listen(
-          (data) => _addLog('Client > ${utf8.decode(data).trim()}'),
-          onDone: () => _clients.remove(client),
-        );
-      });
-    } catch (e) {
-      _addLog("Error starting server: $e");
-    }
-  }
-
-  Future<String> getLocalIp() async {
-    for (var interface in await NetworkInterface.list()) {
-      for (var addr in interface.addresses) {
-        if (addr.type == InternetAddressType.IPv4 &&
-            !addr.address.startsWith("169")) {
-          return addr.address;
-        }
-      }
-    }
-    return "0.0.0.0";
-  }
-
-  void _addLog(String text) {
-    setState(() {
-      _logs.add('[${DateTime.now().toString().substring(11, 19)}] $text');
-    });
-  }
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isServer ? "Server (Windows)" : "Client (iOS)"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: isServer ? _buildServerUI() : _buildClientUI(),
+    return ChangeNotifierProvider(
+      create: (context) => SbViewmodel(),
+      child: Consumer<SbViewmodel>(
+        builder: (context, viewModel, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                Platform.isWindows ? 'Server (Windows)' : 'Client (iOS)',
+              ),
+              backgroundColor: Platform.isWindows
+                  ? Colors.blue[700]
+                  : Colors.green[700],
+            ),
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Platform.isWindows ? _buildServerUI(viewModel) : _buildClientUI(),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildServerUI() {
+  Widget _buildServerUI(SbViewmodel vm) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
+          width: double.infinity,
+          color: Colors.grey[200],
           padding: const EdgeInsets.all(12),
-          color: Platform.isWindows ? Colors.blue[100] : Colors.green[100],
-          child: Center(
-            child: Text(
-              Platform.isWindows
-                  ? 'SERVER MODE (Windows)'
-                  : 'CLIENT MODE (iOS)',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          child: Text(
+            vm.status,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: vm.isConnected ? Colors.green[700] : Colors.orange[700],
             ),
+            textAlign: TextAlign.center,
           ),
         ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(8),
-            itemCount: _logs.length,
-            itemBuilder: (_, i) => Text(_logs[i]),
+            itemCount: vm.messages.length,
+            itemBuilder: (_, i) {
+              final msg = vm.messages[i];
+              return Align(
+                alignment: msg.isMe
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 8,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: msg.isMe ? Colors.blue[600] : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    msg.text,
+                    style: TextStyle(
+                      color: msg.isMe ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],

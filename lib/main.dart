@@ -2,8 +2,19 @@ import 'package:flutter/material.dart';
 import 'ui/home_page.dart';
 
 void main() {
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: MyHomePage(title: 'Sound Breath'),
-  ));
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Sound Breath',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: MyHomePage(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
 }
