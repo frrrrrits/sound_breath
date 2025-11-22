@@ -8,7 +8,9 @@ class SbViewmodel extends ChangeNotifier {
   final TcpConnection _tcp = TcpConnection();
   List<Message> messages = [];
   String status = 'Initializing...';
+
   bool isConnected = false;
+  bool isConnectedWithClient = false;
 
   SbViewmodel() {
     _tcp.messages.listen((msg) {
@@ -50,9 +52,11 @@ class SbViewmodel extends ChangeNotifier {
     if (connected) {
       status = 'Connected to $serverIp:$port';
       isConnected = true;
+      isConnectedWithClient = true;
     } else {
       status = 'Failed to connect';
       isConnected = false;
+      isConnectedWithClient = false;
     }
     notifyListeners();
   }
