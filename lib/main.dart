@@ -122,14 +122,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _connectToServer(String ip, int port) async {
     try {
-      _socket = await Socket.connect(
-        ip,
-        port,
-        timeout: const Duration(seconds: 6),
-      );
+      _socket = await Socket.connect(ip,port, timeout: const Duration(seconds: 6),);
       _connectedIp = ip;
       _addLog('Connected to server!');
-
       _socket!.listen(
         (data) => _addLog('Server > ${utf8.decode(data).trim()}'),
         onDone: () => _addLog('Server disconnected'),
