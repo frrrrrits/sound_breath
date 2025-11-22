@@ -30,7 +30,7 @@ workflows:
 
           # Move it to a known location for artifacts
           mkdir -p $CM_BUILD_DIR/artifacts
-          mv unsigned-app.ipa $CM_BUILD_DIR/artifacts/MyApp-unsigned.ipa
+          mv unsigned-app.ipa $CM_BUILD_DIR/artifacts/runner-unsigned.ipa
 
     artifacts:
       - $CM_BUILD_DIR/artifacts/*.ipa

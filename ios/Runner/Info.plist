@@ -29,6 +29,12 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
+	<key>NSBonjourServices</key>
+	<array>
+    	<string>_fluttercomm._tcp</string>
+	</array>
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>This app needs local network access to discover and connect to the server.</string>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
