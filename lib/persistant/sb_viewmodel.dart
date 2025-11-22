@@ -20,7 +20,7 @@ class SbViewmodel extends ChangeNotifier {
     if (Platform.isWindows) {
       _startAsServer();
     } else {
-      status = 'Unsupported platform';
+      status = 'Server not connected';
       notifyListeners();
     }
   }
