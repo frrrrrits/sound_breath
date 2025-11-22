@@ -29,6 +29,17 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
+	<key>NSBonjourServices</key>
+	<array>
+    	<string>_dartobservatory._tcp</string>
+	</array>
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>This app needs local network access to discover and connect to the server.</string>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -40,11 +51,5 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Your app needs local network access to enable debugging features like hot reload and DevTools.</string>
-	<key>NSBonjourServices</key>
-	<array>
-    	<string>_dartobservatory._tcp</string>
-	</array>
 </dict>
 </plist>
