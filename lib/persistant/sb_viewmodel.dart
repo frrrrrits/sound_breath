@@ -7,7 +7,9 @@ import 'package:sound_breath/utils/message.dart';
 class SbViewmodel extends ChangeNotifier {
   final TcpConnection _tcp = TcpConnection();
   List<Message> messages = [];
+
   String status = 'Initializing...';
+  String clientStatus = 'Waiting for client...';
 
   bool isConnected = false;
   bool isConnectedWithClient = false;
@@ -33,7 +35,9 @@ class SbViewmodel extends ChangeNotifier {
     await _tcp.startServer(localIp: localIp);
 
     status = 'Server running at $localIp:4040';
+
     isConnected = true;
+    isConnectedWithClient = false;
     notifyListeners();
   }
 
@@ -50,10 +54,12 @@ class SbViewmodel extends ChangeNotifier {
     final connected = await _tcp.connectToServer(serverIp, port);
     if (connected) {
       status = 'Connected to $serverIp:$port';
+      clientStatus = 'Client connected';
       isConnected = true;
       isConnectedWithClient = true;
     } else {
       status = 'Failed to connect';
+      clientStatus = 'Client could not connect';
       isConnected = false;
       isConnectedWithClient = false;
     }

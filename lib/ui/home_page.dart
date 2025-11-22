@@ -62,22 +62,6 @@ class MyHomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              color: Colors.grey[200],
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                vm.isConnectedWithClient
-                    ? 'Client connected'
-                    : 'Waiting for client...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: vm.isConnectedWithClient
-                      ? Colors.green[700]
-                      : Colors.orange[700],
-                ),
-              ),
-            ),
           ],
         ),
         Expanded(
