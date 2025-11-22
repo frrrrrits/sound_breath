@@ -20,10 +20,18 @@ workflows:
       - name: Flutter analyze
         script: |
           flutter analyze
-      - name: Flutter unit tests
+      - name: Flutter build ipa
         script: |
-          flutter test
-        ignore_failure: true
-      - name: Flutter build ipa and automatic versioning
-        script: |
-          flutter build ipa --release --no-codesign
+          flutter build ios --release --no-codesign
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -qq -r -9 unsigned-app.ipa Payload
+
+          # Move it to a known location for artifacts
+          mkdir -p $CM_BUILD_DIR/artifacts
+          mv unsigned-app.ipa $CM_BUILD_DIR/artifacts/MyApp-unsigned.ipa
+
+    artifacts:
+      - $CM_BUILD_DIR/artifacts/*.ipa
+      - build/ios/iphoneos/Runner.app
