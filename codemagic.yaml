@@ -20,6 +20,9 @@ workflows:
       - name: Flutter analyze
         script: |
           flutter analyze
+      - name: Quick Test Plist lint
+        script: |
+          plutil -lint ios/Runner/Info.plist
       - name: Flutter build ipa
         script: |
           flutter build ios --debug --no-codesign
