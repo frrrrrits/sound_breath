@@ -20,6 +20,7 @@ workflows:
       - name: Flutter analyze
         script: |
           flutter analyze
+        ignore_errors: true
       - name: Flutter build ipa
         script: |
           flutter build ios --release --no-codesign

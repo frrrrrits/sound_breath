@@ -31,7 +31,7 @@ class MyHomePage extends StatelessWidget {
       ),
     );
   }
-
+  
   Widget _buildServerUI(SbViewmodel vm) {
     return Column(
       children: [
