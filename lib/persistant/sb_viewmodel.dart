@@ -1,28 +1,57 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:sound_breath/constants/app_constants.dart';
+import 'package:sound_breath/data/audio_player_service.dart';
+import 'package:sound_breath/model/audio.dart';
 import 'package:sound_breath/networking/tcp_connection.dart';
 import 'package:sound_breath/utils/message.dart';
+import 'package:sound_breath/utils/network.dart';
 
 class SbViewmodel extends ChangeNotifier {
   final TcpConnection _tcp = TcpConnection();
   List<Message> messages = [];
+  List<Audio> audio = [];
 
+  Audio? nowPlaying;
   String status = 'Initializing...';
-  String clientStatus = 'Waiting for client...';
+  String clientStatus = 'Initializing...';
 
   bool isConnected = false;
   bool isConnectedWithClient = false;
 
   SbViewmodel() {
     _tcp.messages.listen((msg) {
-      messages.add(msg);
-      notifyListeners();
+      if (msg.text.startsWith('PLAY:')) {
+        final url = msg.text.substring(5);
+        final song = audio.firstWhere(
+          (s) => s.url == url,
+          orElse: () => Audio(title: 'Unknown', url: url),
+        );
+        nowPlaying = song;
+        AudioPlayerService.playUrl(url);
+        notifyListeners();
+      } else if (msg.text.startsWith('ADD:')) {
+        final parts = msg.text.substring(4).split('|');
+        final url = parts[0];
+        final title = parts.length > 1
+            ? parts[1]
+            : url.split('/').last.split('?').first;
+        final song = Audio(title: title, url: url);
+        if (!audio.any((s) => s.url == url)) {
+          audio.add(song);
+          notifyListeners();
+        }
+      } else if (msg.text == 'CLEAR') {
+        audio.clear();
+        notifyListeners();
+      }
     });
     if (Platform.isWindows) {
       _startAsServer();
     } else {
       status = 'Server not connected';
+      clientStatus = 'Waiting for client...';
       notifyListeners();
     }
   }
@@ -31,17 +60,19 @@ class SbViewmodel extends ChangeNotifier {
     status = 'Starting server...';
     notifyListeners();
 
-    String localIp = await getLocalIp();
+    String localIp = await Network.getLocalIp();
     await _tcp.startServer(localIp: localIp);
-
-    status = 'Server running at $localIp:4040';
+    status = 'Server running at $localIp\nConnect your client, to ip up above';
 
     isConnected = true;
     isConnectedWithClient = false;
     notifyListeners();
   }
 
-  Future<void> _startAsClient(String serverIp, {int port = 4040}) async {
+  Future<void> _startAsClient(
+    String serverIp, {
+    int port = AppConstants.tcpPort,
+  }) async {
     status = 'Connecting to server...';
     notifyListeners();
 
@@ -66,12 +97,28 @@ class SbViewmodel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void addAudio(String url, {String? title, String? artist}) {
+    final songTitle = title ?? url.split('/').last.split('?').first;
+    final song = Audio(title: songTitle, url: url);
+    audio.add(song);
+    _tcp.sendMessage(
+      'ADD:$url|${song.title}${artist != null ? '|$artist' : ''}',
+    );
+    notifyListeners();
+  }
+
+  void playSong(Audio audio) {
+    _tcp.sendMessage('PLAY:${audio.url}');
+    nowPlaying = audio;
+    notifyListeners();
+  }
+
   void sendMessage(String text) {
     if (text.trim().isEmpty) return;
     _tcp.sendMessage(text.trim());
   }
 
-  void connectToServer(String serverIp, {int port = 4040}) {
+  void connectToServer(String serverIp, {int port = AppConstants.tcpPort}) {
     _startAsClient(serverIp, port: port);
   }
 
@@ -79,17 +126,5 @@ class SbViewmodel extends ChangeNotifier {
   void dispose() {
     _tcp.dispose();
     super.dispose();
-  }
-
-  static Future<String> getLocalIp() async {
-    for (var interface in await NetworkInterface.list()) {
-      for (var addr in interface.addresses) {
-        if (addr.type == InternetAddressType.IPv4 &&
-            !addr.address.startsWith("169")) {
-          return addr.address;
-        }
-      }
-    }
-    return "0.0.0.0";
   }
 }

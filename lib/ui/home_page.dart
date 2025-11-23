@@ -2,8 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sound_breath/model/audio.dart';
 import 'package:sound_breath/persistant/sb_viewmodel.dart';
-import 'package:sound_breath/utils/logger.dart';
+import 'package:sound_breath/ui/view/client_screen.dart';
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
@@ -19,9 +20,6 @@ class MyHomePage extends StatelessWidget {
               title: Text(
                 Platform.isWindows ? 'Server (Windows)' : 'Client (iOS)',
               ),
-              backgroundColor: Platform.isWindows
-                  ? Colors.blue[700]
-                  : Colors.green[700],
             ),
             body: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -103,7 +101,6 @@ class MyHomePage extends StatelessWidget {
   }
 
   Widget _buildClientUI(BuildContext context, SbViewmodel vm) {
-    TextEditingController controller = TextEditingController();
     return Column(
       children: [
         Container(
@@ -119,40 +116,47 @@ class MyHomePage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        Padding(
+        Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    hintText: 'Type a message...',
-                    border: OutlineInputBorder(),
-                  ),
+          child: ClientScreen(vm: vm),
+        ),
+        Expanded(
+          child: vm.audio.isEmpty
+              ? const Center(child: Text('No audio yet. Add one above!'))
+              : ListView.builder(
+                  itemCount: vm.audio.length,
+                  itemBuilder: (context, i) {
+                    final audio = vm.audio[i];
+                    final isPlaying = vm.nowPlaying?.url == audio.url;
+                    return _buildItemCard(context, audio, isPlaying, vm);
+                  },
                 ),
-              ),
-              const SizedBox(width: 8),
-              FloatingActionButton(
-                mini: true,
-                onPressed: () {
-                  if (vm.isConnected) {
-                    vm.sendMessage(controller.text);
-                    controller.clear();
-                    Logger.add("Not connected to server");
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Not connected to server')),
-                    );
-                    Logger.add("Not connected to server");
-                  }
-                },
-                child: const Icon(Icons.send),
-              ),
-            ],
-          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildItemCard(
+    BuildContext context,
+    Audio audio,
+    bool isPlaying,
+    SbViewmodel vm,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: ListTile(
+        title: Text(
+          audio.title,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        trailing: Icon(
+          Icons.play_circle_fill,
+          color: isPlaying ? Colors.green : Colors.deepPurple,
+          size: 32,
+        ),
+        onTap: () => vm.playSong(audio),
+      ),
     );
   }
 

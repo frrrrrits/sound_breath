@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:sound_breath/constants/app_constants.dart';
 import 'package:sound_breath/utils/logger.dart';
 import 'package:sound_breath/utils/message.dart';
 
@@ -12,7 +13,10 @@ class TcpConnection {
       StreamController<Message>.broadcast();
   Stream<Message> get messages => _messageController.stream;
 
-  Future<void> startServer({int port = 4040, String? localIp}) async {
+  Future<void> startServer({
+    int port = AppConstants.tcpPort,
+    String? localIp,
+  }) async {
     _server = await ServerSocket.bind(InternetAddress.anyIPv4, port);
     Logger.add('Server started on $localIp:$port');
     _server!.listen((client) {
@@ -33,7 +37,11 @@ class TcpConnection {
 
   Future<bool> connectToServer(String ip, int port) async {
     try {
-      _socket = await Socket.connect(ip,port,timeout: const Duration(seconds: 6),);
+      _socket = await Socket.connect(
+        ip,
+        port,
+        timeout: const Duration(seconds: 6),
+      );
       Logger.add('Connected to server $ip:$port');
       _socket!.listen((data) {
         final msg = String.fromCharCodes(data).trim();
