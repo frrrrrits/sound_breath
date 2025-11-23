@@ -42,9 +42,6 @@ class SbViewmodel extends ChangeNotifier {
           audio.add(song);
           notifyListeners();
         }
-      } else if (msg.text == 'CLEAR') {
-        audio.clear();
-        notifyListeners();
       }
     });
     if (Platform.isWindows) {
