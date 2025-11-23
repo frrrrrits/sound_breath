@@ -29,7 +29,10 @@ class SbViewmodel extends ChangeNotifier {
           orElse: () => Audio(title: 'Unknown', url: url),
         );
         nowPlaying = song;
-        AudioPlayerService.playUrl(url);
+        if (Platform.isWindows) {
+          AudioPlayerService.playUrl(url);
+          messages.add(msg);
+        }
         notifyListeners();
       } else if (msg.text.startsWith('ADD:')) {
         final parts = msg.text.substring(4).split('|');
@@ -95,11 +98,11 @@ class SbViewmodel extends ChangeNotifier {
   }
 
   void addAudio(String url, {String? title, String? artist}) {
-    final songTitle = title ?? url.split('/').last.split('?').first;
-    final song = Audio(title: songTitle, url: url);
-    audio.add(song);
+    final audioTitle = title ?? url.split('/').last.split('?').first;
+    final audioItem = Audio(title: audioTitle, url: url);
+    audio.add(audioItem);
     _tcp.sendMessage(
-      'ADD:$url|${song.title}${artist != null ? '|$artist' : ''}',
+      'ADD:$url|${audioItem.title}${artist != null ? '|$artist' : ''}',
     );
     notifyListeners();
   }
