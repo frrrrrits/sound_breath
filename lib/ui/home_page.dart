@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sound_breath/constants/app_constants.dart';
 import 'package:sound_breath/model/audio.dart';
 import 'package:sound_breath/persistant/sb_viewmodel.dart';
 import 'package:sound_breath/ui/view/client_screen.dart';
@@ -30,7 +31,7 @@ class MyHomePage extends StatelessWidget {
             floatingActionButton: Platform.isWindows
                 ? null
                 : FloatingActionButton(
-                    onPressed: () => _showAlert(context, 'Info', viewModel),
+                    onPressed: () => _showAlert(context, 'Input server ip', viewModel),
                     child: const Icon(Icons.connect_without_contact),
                   ),
           );
@@ -168,7 +169,6 @@ class MyHomePage extends StatelessWidget {
     TextEditingController controller = TextEditingController();
     return showDialog<void>(
       context: context,
-      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(title),
@@ -178,7 +178,7 @@ class MyHomePage extends StatelessWidget {
                 TextField(
                   controller: controller,
                   decoration: const InputDecoration(
-                    hintText: 'Input server ip address',
+                    hintText: AppConstants.defaultIpAddress,
                     border: OutlineInputBorder(),
                   ),
                 ),
