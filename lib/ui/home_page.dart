@@ -31,7 +31,8 @@ class MyHomePage extends StatelessWidget {
             floatingActionButton: Platform.isWindows
                 ? null
                 : FloatingActionButton(
-                    onPressed: () => _showAlert(context, 'Input server ip', viewModel),
+                    onPressed: () =>
+                        _showAlert(context, 'Input server ip', viewModel),
                     child: const Icon(Icons.connect_without_contact),
                   ),
           );
@@ -175,11 +176,11 @@ class MyHomePage extends StatelessWidget {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                TextField(
+                TextFormField(
                   controller: controller,
-                  decoration: const InputDecoration(
-                    hintText: AppConstants.defaultIpAddress,
-                    border: OutlineInputBorder(),
+                  initialValue: AppConstants.defaultIpAddress,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
                   ),
                 ),
               ],

@@ -13,17 +13,17 @@ class ClientScreen extends StatelessWidget {
     return Column(
       children: [
         TextField(
-          controller: _urlController,
+          controller: _titleController,
           decoration: const InputDecoration(
-            labelText: 'Paste song URL (mp3)',
+            labelText: 'Title',
             border: OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 8),
         TextField(
-          controller: _titleController,
+          controller: _urlController,
           decoration: const InputDecoration(
-            labelText: 'Song title (optional)',
+            labelText: 'Paste sound URL',
             border: OutlineInputBorder(),
           ),
         ),
