@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sound_breath/constants/app_constants.dart';
-import 'package:sound_breath/model/audio.dart';
 import 'package:sound_breath/persistant/sb_viewmodel.dart';
-import 'package:sound_breath/ui/view/client_screen.dart';
+import 'package:sound_breath/ui/screen/client_screen.dart';
+import 'package:sound_breath/ui/screen/server_screen.dart';
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
@@ -17,23 +17,39 @@ class MyHomePage extends StatelessWidget {
       child: Consumer<SbViewmodel>(
         builder: (context, viewModel, child) {
           return Scaffold(
-            appBar: AppBar(
-              title: Text(
-                Platform.isWindows ? 'Server (Windows)' : 'Client (iOS)',
-              ),
-            ),
+            backgroundColor: Platform.isIOS && viewModel.isConnected
+                ? const Color.fromARGB(255, 0, 0, 0)
+                : Colors.white,
             body: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Platform.isWindows
-                  ? _buildServerUI(viewModel)
-                  : _buildClientUI(context, viewModel),
+                  ? ServerScreen(vm: viewModel)
+                  : ClientScreen(vm: viewModel),
             ),
             floatingActionButton: Platform.isWindows
                 ? null
-                : FloatingActionButton(
-                    onPressed: () =>
-                        _showAlert(context, 'Input server ip', viewModel),
-                    child: const Icon(Icons.connect_without_contact),
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      FloatingActionButton(
+                        onPressed: () => _inputAudioDialog(
+                          context,
+                          'Add a audio',
+                          viewModel,
+                        ),
+                        child: const Icon(Icons.add),
+                      ),
+                      SizedBox(height: 8),
+                      FloatingActionButton(
+                        onPressed: () => _inputIpDialog(
+                          context,
+                          'Input server ip',
+                          viewModel,
+                        ),
+                        child: const Icon(Icons.connect_without_contact),
+                      ),
+                    ],
                   ),
           );
         },
@@ -41,152 +57,27 @@ class MyHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildServerUI(SbViewmodel vm) {
-    return Column(
-      children: [
-        Column(
-          children: [
-            Container(
-              width: double.infinity,
-              color: Colors.grey[200],
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                vm.status,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: vm.isConnected
-                      ? Colors.green[700]
-                      : Colors.orange[700],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: vm.messages.length,
-            itemBuilder: (_, i) {
-              final msg = vm.messages[i];
-              return Align(
-                alignment: msg.isMe
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 4,
-                    horizontal: 8,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: msg.isMe ? Colors.blue[600] : Colors.grey[300],
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Text(
-                    msg.text,
-                    style: TextStyle(
-                      color: msg.isMe ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildClientUI(BuildContext context, SbViewmodel vm) {
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          color: Colors.grey[200],
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            vm.status,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: vm.isConnected ? Colors.green[700] : Colors.orange[700],
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          child: ClientScreen(vm: vm),
-        ),
-        Expanded(
-          child: vm.audio.isEmpty
-              ? const Center(child: Text('No audio yet. Add one above!'))
-              : ListView.builder(
-                  itemCount: vm.audio.length,
-                  itemBuilder: (context, i) {
-                    final audio = vm.audio[i];
-                    final isPlaying = vm.nowPlaying?.url == audio.url;
-                    return _buildItemCard(context, audio, isPlaying, vm);
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildItemCard(
-    BuildContext context,
-    Audio audio,
-    bool isPlaying,
-    SbViewmodel vm,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: ListTile(
-        title: Text(
-          audio.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        trailing: Icon(
-          Icons.play_circle_fill,
-          color: isPlaying ? Colors.green : Colors.deepPurple,
-          size: 32,
-        ),
-        onTap: () => vm.playSong(audio),
-      ),
-    );
-  }
-
-  Future<void> _showAlert(
+  Future<void> _inputIpDialog(
     BuildContext context,
     String title,
     SbViewmodel vm,
   ) async {
-    TextEditingController controller = TextEditingController();
+    TextEditingController controller = TextEditingController(
+      text: AppConstants.defaultIpAddress,
+    );
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                TextFormField(
-                  controller: controller,
-                  initialValue: AppConstants.defaultIpAddress,
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-              ],
+        return _showMessageDialog(
+          context,
+          title: title,
+          widget: [
+            TextFormField(
+              controller: controller,
+              decoration: InputDecoration(border: const OutlineInputBorder()),
             ),
-          ),
-          actions: <Widget>[
+          ],
+          actions: [
             TextButton(
               child: const Text('Connect'),
               onPressed: () {
@@ -194,12 +85,78 @@ class MyHomePage extends StatelessWidget {
                 if (vm.isConnected == false) {
                   vm.connectToServer(ip);
                 }
+                controller.clear();
                 Navigator.of(context).pop();
               },
             ),
           ],
         );
       },
+    );
+  }
+
+  Future<void> _inputAudioDialog(
+    BuildContext context,
+    String title,
+    SbViewmodel vm,
+  ) async {
+    final TextEditingController urlController = TextEditingController();
+    final TextEditingController titleController = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return _showMessageDialog(
+          context,
+          title: title,
+          widget: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                labelText: 'Paste sound URL',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+          actions: [
+            TextButton(
+              child: const Text('Add audio'),
+              onPressed: () {
+                if (urlController.text.trim().isNotEmpty) {
+                  vm.addAudio(
+                    urlController.text.trim(),
+                    title: titleController.text.trim().isEmpty
+                        ? null
+                        : titleController.text.trim(),
+                  );
+                  urlController.clear();
+                  titleController.clear();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _showMessageDialog(
+    BuildContext context, {
+    required String title,
+    required List<Widget> widget,
+    required List<Widget> actions,
+  }) {
+    return AlertDialog(
+      title: Text(title),
+      content: SingleChildScrollView(child: ListBody(children: widget)),
+      actions: actions,
     );
   }
 }

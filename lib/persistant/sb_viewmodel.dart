@@ -15,13 +15,23 @@ class SbViewmodel extends ChangeNotifier {
 
   Audio? nowPlaying;
   String status = 'Initializing...';
-  String clientStatus = 'Initializing...';
+  String clientStatus = 'Disconnected';
 
   bool isConnected = false;
   bool isConnectedWithClient = false;
 
   SbViewmodel() {
     _tcp.messages.listen((msg) {
+      if (msg.text.startsWith('200')) {
+        clientStatus = 'Client Connected';
+        isConnectedWithClient = true;
+        notifyListeners();
+      } else if (msg.text.startsWith('400')) {
+        clientStatus = 'Client Disconnected';
+        isConnectedWithClient = false;
+        notifyListeners();
+      }
+
       if (msg.text.startsWith('PLAY:')) {
         final url = msg.text.substring(5);
         final song = audio.firstWhere(
@@ -48,10 +58,9 @@ class SbViewmodel extends ChangeNotifier {
       }
     });
     if (Platform.isWindows) {
-      _startAsServer();
+       _startAsServer();
     } else {
       status = 'Server not connected';
-      clientStatus = 'Waiting for client...';
       notifyListeners();
     }
   }
@@ -62,10 +71,9 @@ class SbViewmodel extends ChangeNotifier {
 
     String localIp = await Network.getLocalIp();
     await _tcp.startServer(localIp: localIp);
-    status = 'Server running at $localIp\nConnect your client, to ip up above';
+    status = 'Server running at $localIp\nConnect your client, to ip above';
 
     isConnected = true;
-    isConnectedWithClient = false;
     notifyListeners();
   }
 
@@ -84,16 +92,15 @@ class SbViewmodel extends ChangeNotifier {
 
     final connected = await _tcp.connectToServer(serverIp, port);
     if (connected) {
-      status = 'Connected to $serverIp:$port';
+      status = 'Connected to server';
       clientStatus = 'Client connected';
       isConnected = true;
-      isConnectedWithClient = true;
     } else {
       status = 'Failed to connect';
-      clientStatus = 'Client could not connect';
+      clientStatus = 'Client could not connected';
       isConnected = false;
-      isConnectedWithClient = false;
     }
+    isConnectedWithClient = _tcp.isConnected();
     notifyListeners();
   }
 

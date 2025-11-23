@@ -18,17 +18,21 @@ class TcpConnection {
     String? localIp,
   }) async {
     _server = await ServerSocket.bind(InternetAddress.anyIPv4, port);
-    Logger.add('Server started on $localIp:$port');
+    Logger.add('[startServer] Server started on $localIp:$port');
     _server!.listen((client) {
       _socket = client;
-      Logger.add('Client connected: ${client.remoteAddress.address}');
+      Logger.add(
+        '[startServer] Client connected: ${client.remoteAddress.address}',
+      );
+      _messageController.add(Message(text: '200', isMe: false));
       client.listen(
         (data) {
           final msg = String.fromCharCodes(data).trim();
           _messageController.add(Message(text: msg, isMe: false));
         },
         onDone: () {
-          Logger.add('Client disconnected');
+          Logger.add('[startServer] Client disconnected');
+          _messageController.add(Message(text: '400', isMe: false));
           _socket = null;
         },
       );
@@ -42,16 +46,28 @@ class TcpConnection {
         port,
         timeout: const Duration(seconds: 6),
       );
-      Logger.add('Connected to server $ip:$port');
-      _socket!.listen((data) {
-        final msg = String.fromCharCodes(data).trim();
-        _messageController.add(Message(text: msg, isMe: false));
-      }, onDone: () => Logger.add('Server disconnected'));
+      Logger.add('[startClient] Connected to server $ip:$port');
+      _messageController.add(Message(text: '200', isMe: false));
+      _socket!.listen(
+        (data) {
+          final msg = String.fromCharCodes(data).trim();
+          _messageController.add(Message(text: msg, isMe: false));
+        },
+        onDone: () {
+          Logger.add('[startClient] Server disconnected');
+          _messageController.add(Message(text: '200', isMe: false));
+          _socket = null;
+        },
+      );
       return true;
     } catch (e) {
       Logger.add('Connection failed: $e');
       return false;
     }
+  }
+
+  bool isConnected()  {
+    return _socket != null;
   }
 
   void sendMessage(String text) {
