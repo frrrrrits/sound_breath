@@ -17,7 +17,8 @@ class MyHomePage extends StatelessWidget {
       child: Consumer<SbViewmodel>(
         builder: (context, viewModel, child) {
           return Scaffold(
-            backgroundColor: Platform.isIOS && viewModel.isConnected
+            backgroundColor:
+                AppConstants.isMobile && viewModel.isConnectedWithClient
                 ? const Color.fromARGB(255, 0, 0, 0)
                 : Colors.white,
             body: Padding(

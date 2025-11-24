@@ -10,6 +10,13 @@
             "type": "dart"
         },
         {
+            "name": "sound_breath (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main.dart"
+        },
+        {
             "name": "sound_breath (profile mode)",
             "request": "launch",
             "type": "dart",

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sound_breath/constants/app_constants.dart';
 import 'package:sound_breath/persistant/sb_viewmodel.dart';
 import 'package:sound_breath/ui/screen/view/card_item_view.dart';
 
@@ -12,7 +13,16 @@ class ClientScreen extends StatelessWidget {
       children: [
         Expanded(
           child: vm.audio.isEmpty
-              ? const Center(child: Text('No audio yet. Add one above!'))
+              ? Center(
+                  child: Text(
+                    'No audio yet. Add one above!',
+                    style: TextStyle(
+                      color: AppConstants.isMobile && vm.isConnectedWithClient
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  ),
+                )
               : GridView.builder(
                   padding: const EdgeInsets.all(20),
                   itemCount: vm.audio.length,

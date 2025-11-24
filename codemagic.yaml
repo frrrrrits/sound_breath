@@ -33,8 +33,34 @@ workflows:
 
           # Move it to a known location for artifacts
           mkdir -p $CM_BUILD_DIR/artifacts
-          mv unsigned-app.ipa $CM_BUILD_DIR/artifacts/runner-unsigned.ipa
+          mv unsigned-app.ipa $CM_BUILD_DIR/artifacts/soundbrat.ipa
 
     artifacts:
       - $CM_BUILD_DIR/artifacts/*.ipa
       - build/ios/iphoneos/Runner.app
+  
+  android-debug:
+    name: Android Debug (Signed)
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+
+      - name: Build signed debug APK
+        script: |
+          flutter build apk --debug
+
+          # Create artifacts folder
+          mkdir -p $CM_BUILD_DIR/artifacts
+
+          # Copy and rename the debug APK
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+             $CM_BUILD_DIR/artifacts/soundbrat-debug.apk
+
+    artifacts:
+      - $CM_BUILD_DIR/artifacts/soundbrat-debug.apk
+      - build/app/outputs/flutter-apk/app-debug.apk
