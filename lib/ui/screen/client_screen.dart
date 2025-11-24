@@ -17,7 +17,7 @@ class ClientScreen extends StatelessWidget {
                   child: Text(
                     'No audio yet. Add one above!',
                     style: TextStyle(
-                      color: AppConstants.isMobile && vm.isConnectedWithClient
+                      color: AppConstants.isMobile && vm.isConnected
                           ? Colors.white
                           : Colors.black,
                     ),

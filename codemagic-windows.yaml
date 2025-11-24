@@ -1,0 +1,50 @@
+workflows:
+  windows-release:
+    name: Windows Desktop Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+    triggering:
+      events:
+        - push
+        - tag
+    scripts:
+      - name: Enable Windows desktop & get packages
+        script: |
+          flutter config --enable-windows-desktop
+          flutter pub get
+
+      - name: Build Windows executable (release mode)
+        script: |
+          flutter build windows --release
+
+          # Create artifacts folder
+          mkdir -p $CM_BUILD_DIR/artifacts
+
+          # Copy the whole build folder (contains .exe + all DLLs)
+          cp -r build/windows/x64/runner/Release $CM_BUILD_DIR/artifacts/soundbrat-windows
+
+          # Optional: Create a single portable ZIP (most people prefer this)
+          cd $CM_BUILD_DIR/artifacts
+          zip -r -9 soundbrat-windows-portable.zip soundbrat-windows
+
+          # Optional: Create installer with Inno Setup (uncomment if you want real .exe installer)
+          # curl -fsSL https://jrsoftware.org/download.php/is.exe -o innosetup.exe
+          # ./innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+          # "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O. /F"SoundbratInstaller" windows/runner/Installer.iss
+
+    artifacts:
+      - $CM_BUILD_DIR/artifacts/soundbrat-windows-portable.zip
+      - $CM_BUILD_DIR/artifacts/soundbrat-windows/**
+
+    publishing:
+      github_releases:
+        files:
+          - $CM_BUILD_DIR/artifacts/soundbrat-windows-portable.zip
+          - $CM_BUILD_DIR/artifacts/soundbrat-windows/**
+        tag: windows-v${CM_BUILD_NUMBER}
+        title: "Windows Desktop Build v${CM_BUILD_NUMBER}"
+        notes: |
+          Windows portable ZIP (just extract & run soundbrat-windows/soundbrat.exe)
+          Built with Flutter ${{FLUTTER_VERSION}}

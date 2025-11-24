@@ -7,6 +7,10 @@ workflows:
       flutter: stable
       xcode: latest # <-- set to specific version e.g. 14.3, 15.0 to avoid unexpected updates.
       cocoapods: default
+    triggering:
+      events:
+        - push
+        - tag
     scripts:
       - name: Set up code signing settings on Xcode project
         script: |
@@ -38,29 +42,16 @@ workflows:
     artifacts:
       - $CM_BUILD_DIR/artifacts/*.ipa
       - build/ios/iphoneos/Runner.app
-  
-  android-debug:
-    name: Android Debug (Signed)
-    instance_type: mac_mini_m2
-    max_build_duration: 120
-    environment:
-      flutter: stable
-    scripts:
-      - name: Get Flutter packages
-        script: |
-          flutter pub get
-
-      - name: Build signed debug APK
-        script: |
-          flutter build apk --debug
-
-          # Create artifacts folder
-          mkdir -p $CM_BUILD_DIR/artifacts
-
-          # Copy and rename the debug APK
-          cp build/app/outputs/flutter-apk/app-debug.apk \
-             $CM_BUILD_DIR/artifacts/soundbrat-debug.apk
-
-    artifacts:
-      - $CM_BUILD_DIR/artifacts/soundbrat-debug.apk
-      - build/app/outputs/flutter-apk/app-debug.apk
+    
+    publishing:
+      github-releases:
+        # File patterns to upload (matches your artifacts)
+        files:
+          - $CM_BUILD_DIR/artifacts/*.ipa
+          - build/ios/iphoneos/Runner.app
+        # Optional: Release notes (markdown supported)
+        notes: |
+          ## iOS Unsigned Build
+          - Built with Flutter stable
+          - Unsigned IPA for manual signing/TestFlight
+          - Commit: ${CM_COMMIT_MESSAGE_SHORT}
