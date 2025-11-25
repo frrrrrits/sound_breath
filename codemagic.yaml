@@ -75,7 +75,7 @@ workflows:
   
   android-debug:
     name: Android Debug
-    instance_type: linux_x2
+    instance_type: mac_mini_m2
     max_build_duration: 120
     environment:
       flutter: stable
@@ -137,8 +137,8 @@ workflows:
 
   windows-release:
     name: Windows Desktop
-    instance_type: windows_x2
-    max_build_duration: 60
+    instance_type: mac_mini_m2
+    max_build_duration: 120
     environment:
       groups:
         - github_releases
