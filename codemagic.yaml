@@ -13,7 +13,7 @@ workflows:
       events:
         - tag
       branch_patterns:
-        - pattern: '*'
+        - pattern: 'v*'
           include: true
           source: true
     scripts:
@@ -74,13 +74,20 @@ workflows:
       - build/ios/iphoneos/Runner.app
   
   android-debug:
-    name: Android Debug (Signed)
-    instance_type: mac_mini_m2
+    name: Android Debug
+    instance_type: linux_x2
     max_build_duration: 120
     environment:
       flutter: stable
       groups:
         - github_releases
+    triggering:
+      events:
+        - tag
+      branch_patterns:
+        - pattern: 'v*'
+          include: true
+          source: true
     scripts:
       - name: Get Flutter packages
         script: |
@@ -101,8 +108,10 @@ workflows:
             echo "No tag detected → skipping GitHub release"
             exit 0
           fi
+
           echo "Creating GitHub Release for tag $CM_TAG"
           echo $GITHUB_TOKEN | gh auth login --with-token
+
           # Optional: generate simple release notes from git changelog
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$PREVIOUS_TAG" ]; then
@@ -112,20 +121,23 @@ workflows:
           else
             NOTES_ARG="--notes Release $CM_TAG"
           fi
+
           # Create the release and upload the IPA
           gh release create "$CM_TAG" \
-            "$CM_BUILD_DIR/artifacts/soundbrat-debug.apk" \
             --title "soundbrat $CM_TAG" \
             $NOTES_ARG \
-            --draft=false  
+            --draft=false
+
+          gh release upload $CM_TAG \
+            $CM_BUILD_DIR/artifacts/*.apk
 
     artifacts:
       - $CM_BUILD_DIR/artifacts/soundbrat-debug.apk
       - build/app/outputs/flutter-apk/app-debug.apk
 
   windows-release:
-    name: Windows Desktop Release
-    instance_type: mac_mini_m2
+    name: Windows Desktop
+    instance_type: windows_x2
     max_build_duration: 60
     environment:
       groups:
@@ -144,24 +156,14 @@ workflows:
           flutter config --enable-windows-desktop
           flutter pub get
 
-      - name: Build Windows executable (release mode)
+      - name: Build Windows
         script: |
-          flutter build windows --release
+          flutter build windows
 
-          # Create artifacts folder
-          mkdir -p $CM_BUILD_DIR/artifacts
-
-          # Copy the whole build folder (contains .exe + all DLLs)
-          cp -r build/windows/x64/runner/Release $CM_BUILD_DIR/artifacts/soundbrat-windows
-
-          # Optional: Create a single portable ZIP (most people prefer this)
-          cd $CM_BUILD_DIR/artifacts
-          zip -r -9 soundbrat-windows-portable.zip soundbrat-windows
-
-          # Optional: Create installer with Inno Setup (uncomment if you want real .exe installer)
-          # curl -fsSL https://jrsoftware.org/download.php/is.exe -o innosetup.exe
-          # ./innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-          # "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O. /F"SoundbratInstaller" windows/runner/Installer.iss
+      - name: Export bundle 
+        script: |
+          cd build/windows/x64/runner/Release
+          7z a -r ../release.zip ./*
       
       - name: Publish to GitHub Releases
         script: |
@@ -185,7 +187,7 @@ workflows:
 
           # Create the release and upload the portable ZIP
           gh release create "$CM_TAG" \
-            "$CM_BUILD_DIR/artifacts/soundbrat-windows-portable.zip" \
+            "build\windows\x64\runner\release.zip" \
             --title "soundbrat Windows $CM_TAG" \
             $NOTES_ARG \
             --target $CM_COMMIT_SHA
@@ -193,5 +195,4 @@ workflows:
           echo "GitHub Release $CM_TAG created and ZIP uploaded!"
 
     artifacts:
-      - $CM_BUILD_DIR/artifacts/soundbrat-windows-portable.zip
-      - $CM_BUILD_DIR/artifacts/soundbrat-windows/**
+      - build\windows\x64\runner\release.zip
