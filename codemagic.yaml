@@ -7,10 +7,15 @@ workflows:
       flutter: stable
       xcode: latest # <-- set to specific version e.g. 14.3, 15.0 to avoid unexpected updates.
       cocoapods: default
+      vars:
+        GITHUB_TOKEN
     triggering:
       events:
-        - push
         - tag
+      branch_patterns:
+        - pattern: '*'
+          include: true
+          source: true
     scripts:
       - name: Set up code signing settings on Xcode project
         script: |
@@ -38,34 +43,49 @@ workflows:
           # Move it to a known location for artifacts
           mkdir -p $CM_BUILD_DIR/artifacts
           mv unsigned-app.ipa $CM_BUILD_DIR/artifacts/soundbrat.ipa
+      - name: Publish to GitHub Releases
+        # This script runs on every build, but only creates a release when a tag exists
+        script: |
+          if [ -z "$CM_TAG" ]; then
+            echo "No tag detected → skipping GitHub release"
+            exit 0
+          fi
+          echo "Creating GitHub Release for tag $CM_TAG"
+          # Optional: generate simple release notes from git changelog
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Generating release notes from $PREVIOUS_TAG..$CM_TAG"
+            git log --pretty="- %s (%an)" $PREVIOUS_TAG..HEAD > /tmp/release-notes.md
+            NOTES_ARG="--notes-file /tmp/release-notes.md"
+          else
+            NOTES_ARG="--notes Release $CM_TAG"
+          fi
+          # Create the release and upload the IPA
+          gh release create "$CM_TAG" \
+            "$CM_BUILD_DIR/artifacts/soundbrat.ipa" \
+            --title "soundbrat iOS $CM_TAG" \
+            $NOTES_ARG \
+            --draft=false
 
     artifacts:
       - $CM_BUILD_DIR/artifacts/*.ipa
       - build/ios/iphoneos/Runner.app
-    
-    publishing:
-      github-releases:
-        # File patterns to upload (matches your artifacts)
-        files:
-          - $CM_BUILD_DIR/artifacts/*.ipa
-          - build/ios/iphoneos/Runner.app
-        # Optional: Release notes (markdown supported)
-        notes: |
-          ## iOS Unsigned Build
-          - Built with Flutter stable
-          - Unsigned IPA for manual signing/TestFlight
-          - Commit: ${CM_COMMIT_MESSAGE_SHORT}
   
   windows-release:
     name: Windows Desktop Release
     instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
+      vars:
+        GITHUB_TOKEN
       flutter: stable
     triggering:
       events:
-        - push
         - tag
+      branch_patterns:
+        - pattern: 'v*'
+          include: true
+          source: true
     scripts:
       - name: Enable Windows desktop & get packages
         script: |
@@ -90,18 +110,35 @@ workflows:
           # curl -fsSL https://jrsoftware.org/download.php/is.exe -o innosetup.exe
           # ./innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
           # "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O. /F"SoundbratInstaller" windows/runner/Installer.iss
+      
+      - name: Publish to GitHub Releases
+        script: |
+          # CM_TAG is automatically set when build is triggered by a tag
+          if [ -z "$CM_TAG" ]; then
+            echo "No tag detected this should not happen (trigger is tag-only)"
+            exit 0
+          fi
+          echo "Creating GitHub Release for tag: $CM_TAG"
+          
+          # Generate nice release notes from git log (since previous tag)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Generating changelog from $PREVIOUS_TAG..$CM_TAG"
+            git log --pretty=format:"- %s (%h by %an)" $PREVIOUS_TAG..HEAD > /tmp/release-notes.md
+            NOTES_ARG="--notes-file /tmp/release-notes.md"
+          else
+            NOTES_ARG="--notes Released Windows build $CM_TAG"
+          fi
+
+          # Create the release and upload the portable ZIP
+          gh release create "$CM_TAG" \
+            "$CM_BUILD_DIR/artifacts/soundbrat-windows-portable.zip" \
+            --title "soundbrat Windows $CM_TAG" \
+            $NOTES_ARG \
+            --target $CM_COMMIT_SHA
+
+          echo "GitHub Release $CM_TAG created and ZIP uploaded!"
 
     artifacts:
       - $CM_BUILD_DIR/artifacts/soundbrat-windows-portable.zip
       - $CM_BUILD_DIR/artifacts/soundbrat-windows/**
-
-    publishing:
-      github_releases:
-        files:
-          - $CM_BUILD_DIR/artifacts/soundbrat-windows-portable.zip
-          - $CM_BUILD_DIR/artifacts/soundbrat-windows/**
-        tag: windows-v${CM_BUILD_NUMBER}
-        title: "Windows Desktop Build v${CM_BUILD_NUMBER}"
-        notes: |
-          Windows portable ZIP (just extract & run soundbrat-windows/soundbrat.exe)
-          Built with Flutter ${{FLUTTER_VERSION}}
