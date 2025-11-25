@@ -7,8 +7,8 @@ workflows:
       flutter: stable
       xcode: latest # <-- set to specific version e.g. 14.3, 15.0 to avoid unexpected updates.
       cocoapods: default
-      vars:
-        GITHUB_TOKEN
+      groups:
+        - github_releases
     triggering:
       events:
         - tag
@@ -51,6 +51,8 @@ workflows:
             exit 0
           fi
           echo "Creating GitHub Release for tag $CM_TAG"
+          echo $GITHUB_TOKEN | gh auth login --with-token
+
           # Optional: generate simple release notes from git changelog
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$PREVIOUS_TAG" ]; then
@@ -71,13 +73,63 @@ workflows:
       - $CM_BUILD_DIR/artifacts/*.ipa
       - build/ios/iphoneos/Runner.app
   
+  android-debug:
+    name: Android Debug (Signed)
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      flutter: stable
+      groups:
+        - github_releases
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build signed debug APK
+        script: |
+          flutter build apk --debug
+          # Create artifacts folder
+          mkdir -p $CM_BUILD_DIR/artifacts
+          # Copy and rename the debug APK
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+             $CM_BUILD_DIR/artifacts/soundbrat-debug.apk
+
+      - name: Publish to GitHub Releases
+        # This script runs on every build, but only creates a release when a tag exists
+        script: |
+          if [ -z "$CM_TAG" ]; then
+            echo "No tag detected → skipping GitHub release"
+            exit 0
+          fi
+          echo "Creating GitHub Release for tag $CM_TAG"
+          echo $GITHUB_TOKEN | gh auth login --with-token
+          # Optional: generate simple release notes from git changelog
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Generating release notes from $PREVIOUS_TAG..$CM_TAG"
+            git log --pretty="- %s (%an)" $PREVIOUS_TAG..HEAD > /tmp/release-notes.md
+            NOTES_ARG="--notes-file /tmp/release-notes.md"
+          else
+            NOTES_ARG="--notes Release $CM_TAG"
+          fi
+          # Create the release and upload the IPA
+          gh release create "$CM_TAG" \
+            "$CM_BUILD_DIR/artifacts/soundbrat-debug.apk" \
+            --title "soundbrat $CM_TAG" \
+            $NOTES_ARG \
+            --draft=false  
+
+    artifacts:
+      - $CM_BUILD_DIR/artifacts/soundbrat-debug.apk
+      - build/app/outputs/flutter-apk/app-debug.apk
+
   windows-release:
     name: Windows Desktop Release
     instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
-      vars:
-        GITHUB_TOKEN
+      groups:
+        - github_releases
       flutter: stable
     triggering:
       events:
@@ -119,7 +171,8 @@ workflows:
             exit 0
           fi
           echo "Creating GitHub Release for tag: $CM_TAG"
-          
+          echo $GITHUB_TOKEN | gh auth login --with-token
+
           # Generate nice release notes from git log (since previous tag)
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$PREVIOUS_TAG" ]; then
